@@ -1,0 +1,7 @@
+flask>=3.0.0
+werkzeug>=3.0.0
+# Optional packages for full BLIP/YOLO support:
+# pillow>=10.0.0
+# torch>=2.2.0
+# transformers>=4.40.0
+# ultralytics>=8.2.0
