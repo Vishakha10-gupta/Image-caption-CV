@@ -1,0 +1,12 @@
+# Quick installation for testing
+# Install this for quick CPU-only setup:
+# pip install -r requirements-test.txt --index-url https://download.pytorch.org/whl/cpu
+
+streamlit>=1.28.0
+pillow>=10.0.0
+transformers>=4.40.0
+ultralytics>=8.2.0
+opencv-python>=4.8.0
+numpy>=1.24.0
+torch>=2.0.0 --index-url https://download.pytorch.org/whl/cpu
+torchvision>=0.15.0

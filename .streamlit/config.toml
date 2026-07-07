@@ -1,0 +1,17 @@
+[theme]
+primaryColor = "#00ff88"
+backgroundColor = "#111111"
+secondaryBackgroundColor = "#222222"
+textColor = "#ffffff"
+font = "sans serif"
+
+[client]
+showErrorDetails = true
+maxMessageSize = 200
+
+[server]
+maxUploadSize = 200
+enableXsrfProtection = true
+
+[logger]
+level = "info"

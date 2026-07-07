@@ -1,52 +1,87 @@
-from flask import Flask, render_template, request, send_from_directory, url_for
-import os
-from werkzeug.utils import secure_filename
+import streamlit as st
+from PIL import Image
+import io
+from model import generate_caption_with_detection
 
-from model import image_caption_pipeline
+st.set_page_config(
+    page_title="AI Image Captioning",
+    page_icon="🖼️",
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
 
-app = Flask(__name__)
+# Custom CSS styling
+st.markdown("""
+    <style>
+    .main {
+        padding: 2rem;
+    }
+    .stTitle {
+        text-align: center;
+        color: #00ff88;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
+st.title("🖼️ AI Image Captioning")
+st.markdown("### Upload an image to generate intelligent captions powered by AI")
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# Create two columns for better layout
+col1, col2 = st.columns([1, 1], gap="large")
 
+with col1:
+    st.subheader("Upload Image")
+    uploaded_file = st.file_uploader(
+        "Choose an image...",
+        type=["jpg", "jpeg", "png", "bmp", "webp"],
+        label_visibility="collapsed"
+    )
 
-@app.route("/")
-def home():
-    return render_template("index.html")
+with col2:
+    st.subheader("Preview")
+    if uploaded_file is not None:
+        image = Image.open(uploaded_file)
+        st.image(image, use_container_width=True, caption="Uploaded Image")
 
-
-@app.route("/uploads/<filename>")
-def uploaded_file(filename):
-    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
-
-
-@app.route("/predict", methods=["POST"])
-def predict():
-    if "image" not in request.files:
-        return render_template("index.html", error="No image uploaded."), 400
-
-    file = request.files["image"]
-    if file.filename == "":
-        return render_template("index.html", error="No file selected."), 400
-
-    filename = secure_filename(file.filename)
-    filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    file.save(filepath)
-
-    try:
-        caption = image_caption_pipeline(filepath)
-    except Exception as exc:
-        return render_template(
-            "index.html",
-            error=f"Caption generation failed: {exc}",
-            image=url_for("uploaded_file", filename=filename),
-        ), 500
-
-    image_url = url_for("uploaded_file", filename=filename)
-    return render_template("index.html", image=image_url, caption=caption)
+# Process and generate caption
+if uploaded_file is not None:
+    with st.spinner("🔄 Analyzing image and generating caption..."):
+        try:
+            # Convert uploaded file to PIL Image
+            image = Image.open(uploaded_file)
+            
+            # Generate caption with object detection
+            caption, detections = generate_caption_with_detection(image)
+            
+            # Display results
+            st.success("✅ Caption generated successfully!")
+            
+            col1, col2 = st.columns([1, 1])
+            
+            with col1:
+                st.subheader("📝 Generated Caption")
+                st.markdown(f"### {caption}")
+            
+            with col2:
+                st.subheader("🎯 Detected Objects")
+                if detections:
+                    for obj in detections:
+                        st.markdown(f"- **{obj['name']}** (confidence: {obj['confidence']:.2%})")
+                else:
+                    st.info("No objects detected in the image.")
+            
+            # Additional info
+            st.divider()
+            with st.expander("📊 Model Information"):
+                st.markdown("""
+                - **Vision Model**: YOLOv8 Nano (Transfer Learning)
+                - **Captioning Model**: BLIP (Salesforce)
+                - **Framework**: Streamlit
+                """)
+        
+        except Exception as e:
+            st.error(f"❌ Error generating caption: {str(e)}")
+            st.info("Please ensure the image format is supported and try again.")
 
 
 if __name__ == "__main__":

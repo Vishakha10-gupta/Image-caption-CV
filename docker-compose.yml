@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  caption-app:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      - STREAMLIT_SERVER_MAXUPLOADSIZE=200
+      - STREAMLIT_SERVER_ENABLEXSRFPROTECTION=true
+    volumes:
+      - ./app.py:/app/app.py
+      - ./model.py:/app/model.py
+    restart: unless-stopped
+    # Uncomment for GPU support (requires nvidia-docker)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #       - driver: nvidia
+    #         count: 1
+    #         capabilities: [gpu]

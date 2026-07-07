@@ -1,7 +1,8 @@
-flask>=3.0.0
-werkzeug>=3.0.0
-# Optional packages for full BLIP/YOLO support:
-# pillow>=10.0.0
-# torch>=2.2.0
-# transformers>=4.40.0
-# ultralytics>=8.2.0
+streamlit>=1.28.0
+pillow>=10.0.0
+transformers>=4.40.0
+ultralytics>=8.2.0
+opencv-python>=4.8.0
+numpy>=1.24.0
+# Note: Install PyTorch separately using setup.bat (Windows) or setup.sh (Linux/Mac)
+# Or manually: pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu

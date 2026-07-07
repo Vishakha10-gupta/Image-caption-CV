@@ -1,5 +1,6 @@
 import os
-from typing import List
+from typing import List, Tuple, Dict
+import streamlit as st
 
 try:
     from PIL import Image
@@ -26,27 +27,141 @@ except ImportError:  # pragma: no cover
 MODEL_NAME = "Salesforce/blip-image-captioning-base"
 YOLO_MODEL_NAME = "yolov8n.pt"
 
-yolo_model = None
-processor = None
-caption_model = None
+
+@st.cache_resource
+def _load_yolo_model():
+    """Load YOLO nano model with caching for Streamlit."""
+    if YOLO is None:
+        raise ImportError("ultralytics not installed. Install with: pip install ultralytics")
+    return YOLO(YOLO_MODEL_NAME)
 
 
-def _load_models():
-    global yolo_model, processor, caption_model
+@st.cache_resource
+def _load_caption_model():
+    """Load BLIP caption model with caching for Streamlit."""
+    if BlipProcessor is None or BlipForConditionalGeneration is None:
+        raise ImportError("transformers not installed. Install with: pip install transformers")
+    if torch is None:
+        raise ImportError("torch not installed. Install with: pip install torch")
+    
+    processor = BlipProcessor.from_pretrained(MODEL_NAME)
+    caption_model = BlipForConditionalGeneration.from_pretrained(MODEL_NAME)
+    caption_model.eval()
+    
+    return processor, caption_model
 
-    if yolo_model is None:
-        if YOLO is None:
-            return None, None, None
-        yolo_model = YOLO(YOLO_MODEL_NAME)
 
-    if processor is None or caption_model is None:
-        if BlipProcessor is None or BlipForConditionalGeneration is None or torch is None:
-            return yolo_model, None, None
-        processor = BlipProcessor.from_pretrained(MODEL_NAME)
-        caption_model = BlipForConditionalGeneration.from_pretrained(MODEL_NAME)
-        caption_model.eval()
+def _detect_objects(yolo_model, image: Image.Image, conf_threshold: float = 0.45) -> List[Dict]:
+    """
+    Detect objects in image using YOLO nano model.
+    
+    Args:
+        yolo_model: Loaded YOLO model
+        image: PIL Image object
+        conf_threshold: Confidence threshold for detection
+    
+    Returns:
+        List of detected objects with names and confidence scores
+    """
+    try:
+        results = yolo_model(image, conf=conf_threshold, verbose=False)
+        detections = []
+        
+        if results and len(results) > 0:
+            result = results[0]
+            if hasattr(result, 'boxes') and result.boxes is not None:
+                for box in result.boxes:
+                    class_id = int(box.cls[0])
+                    confidence = float(box.conf[0])
+                    class_name = result.names[class_id]
+                    
+                    detections.append({
+                        "name": class_name,
+                        "confidence": confidence,
+                        "class_id": class_id
+                    })
+        
+        return detections
+    except Exception as e:
+        print(f"Error in object detection: {str(e)}")
+        return []
 
-    return yolo_model, processor, caption_model
+
+def _generate_caption(processor, caption_model, image: Image.Image, context: str = None) -> str:
+    """
+    Generate caption for image using BLIP model.
+    
+    Args:
+        processor: BLIP processor
+        caption_model: BLIP caption model
+        image: PIL Image object
+        context: Optional context text to guide caption generation
+    
+    Returns:
+        Generated caption string
+    """
+    try:
+        # Convert image to RGB if necessary
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+        
+        # Prepare inputs
+        if context:
+            inputs = processor(image, text=context, return_tensors="pt")
+        else:
+            inputs = processor(image, return_tensors="pt")
+        
+        # Generate caption
+        with torch.no_grad():
+            out = caption_model.generate(**inputs, max_length=100, num_beams=5)
+        
+        caption = processor.decode(out[0], skip_special_tokens=True)
+        return caption
+    except Exception as e:
+        print(f"Error in caption generation: {str(e)}")
+        return "Unable to generate caption"
+
+
+def generate_caption_with_detection(image: Image.Image) -> Tuple[str, List[Dict]]:
+    """
+    Main function: Detect objects and generate image caption.
+    
+    Args:
+        image: PIL Image object
+    
+    Returns:
+        Tuple of (caption, detected_objects)
+    """
+    # Load models
+    yolo_model = _load_yolo_model()
+    processor, caption_model = _load_caption_model()
+    
+    # Detect objects
+    detections = _detect_objects(yolo_model, image)
+    
+    # Generate context from detections for better captioning
+    context = None
+    if detections:
+        detected_names = ", ".join([d["name"] for d in detections[:5]])  # Top 5 detections
+        context = f"a photo with {detected_names}"
+    
+    # Generate caption
+    caption = _generate_caption(processor, caption_model, image, context)
+    
+    return caption, detections
+
+
+def image_caption_pipeline(filepath: str) -> str:
+    """
+    Legacy function for backward compatibility.
+    Load image from file path and generate caption.
+    """
+    if Image is None:
+        raise ImportError("Pillow not installed")
+    
+    image = Image.open(filepath)
+    caption, _ = generate_caption_with_detection(image)
+    return caption
 
 
 def preprocess_image(image_path: str) -> str:
