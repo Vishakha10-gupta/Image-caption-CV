@@ -1,6 +1,7 @@
 import streamlit as st
 from PIL import Image
 import io
+from ultralytics import YOLO
 from model import generate_caption_with_detection
 
 st.set_page_config(
