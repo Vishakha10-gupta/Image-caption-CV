@@ -1,5 +1,6 @@
 streamlit
 torch
-transformers
-Pillow
 torchvision
+transformers
+accelerate
+Pillow
