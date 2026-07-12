@@ -1,201 +1,82 @@
-# 🖼️ AI Image Captioning with YOLO Transfer Learning
 
-A Streamlit web application that uses **YOLO nano (transfer learning)** for object detection and **BLIP** for intelligent image captioning.
+# Lightweight Image Captioning with Streamlit
+
+This project implements a lightweight image captioning solution using a pre-trained Vision-Encoder-Decoder model from Hugging Face Transformers, deployed as a web application using Streamlit.
+
+## Project Overview
+
+The goal of this project is to provide an easy-to-use tool for generating descriptive captions for images. It leverages the `nlpconnect/vit-gpt2-image-captioning` model, which combines a Vision Transformer (ViT) for image encoding and a GPT-2 model for text decoding. The application features a simple web interface built with Streamlit, allowing users to upload an image and instantly receive a generated caption.
 
 ## Features
 
-✨ **Key Capabilities:**
-- Upload images in multiple formats (JPG, PNG, BMP, WebP)
-- Automatic object detection using YOLOv8 Nano
-- AI-powered caption generation using BLIP
-- Context-aware captions based on detected objects
-- Beautiful, responsive Streamlit UI
-- Production-ready deployment
+- **Image Upload:** Easily upload images in JPG, JPEG, or PNG formats.
+- **AI-Powered Captioning:** Utilizes a pre-trained state-of-the-art model for accurate and relevant caption generation.
+- **Lightweight:** Designed to be efficient and suitable for deployment on platforms with limited resources.
+- **Streamlit Web UI:** Intuitive and interactive user interface.
 
-## Installation
+## Project Structure
 
-### Prerequisites
-- Python 3.8+
-- pip or conda
-
-### Setup - Windows (Recommended)
-
-Simply run the setup script:
-```bash
-setup.bat
+```
+my-image-captioning-project/
+├── app.py                   # Main Streamlit application file
+├── requirements.txt         # List of Python dependencies
+├── README.md                # Project documentation
+├── notebooks/               # (Optional) Jupyter/Colab notebooks for development and experimentation
+│   └── image_captioning_development.ipynb
+└── assets/                  # (Optional) Directory for example images or other static assets
+    └── example_image.jpg
 ```
 
-This will automatically:
-1. Install PyTorch CPU version (optimized for Windows)
-2. Install all other dependencies
-3. Prepare the environment
+## Setup and Local Development
 
-### Setup - Linux/Mac
+Follow these steps to set up and run the project locally:
 
-```bash
-chmod +x setup.sh
-./setup.sh
-```
+1.  **Clone the Repository:**
+    ```bash
+    git clone https://github.com/your-username/my-image-captioning-project.git
+    cd my-image-captioning-project
+    ```
 
-### Manual Setup (All Platforms)
+2.  **Create a Virtual Environment (Recommended):**
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows: `venv\Scriptsctivate`
+    ```
 
-1. **Clone/Navigate to the project:**
-   ```bash
-   cd Image-caption-CV
-   ```
+3.  **Install Dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-2. **Create virtual environment (optional but recommended):**
-   ```bash
-   python -m venv venv
-   # On Windows:
-   venv\Scripts\activate
-   # On Linux/Mac:
-   source venv/bin/activate
-   ```
+4.  **Run the Streamlit Application:**
+    ```bash
+    streamlit run app.py
+    ```
 
-3. **Install PyTorch:**
-   ```bash
-   # CPU version (recommended for most users):
-   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-   
-   # GPU version (CUDA 12.1):
-   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-   ```
-
-4. **Install other dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Run the application locally:**
-   ```bash
-   streamlit run app.py
-   ```
-
-   The app will open at `http://localhost:8501`
+    The application will open in your web browser, typically at `http://localhost:8501`.
 
 ## Usage
 
-1. **Upload an Image**: Click the upload button and select an image (JPG, PNG, BMP, or WebP)
-2. **View Preview**: The image will be displayed in the preview panel
-3. **Get Caption**: The app automatically detects objects and generates a caption
-4. **View Results**: See the generated caption and list of detected objects
+1.  Open the Streamlit application in your web browser.
+2.  Click the "Choose an image..." button to upload an image (JPG, JPEG, or PNG).
+3.  Once the image is displayed, click the "Generate Caption" button.
+4.  The generated caption will appear below the image.
 
-## Models Used
+## Model Details
 
-| Model | Purpose | Source |
-|-------|---------|--------|
-| **YOLOv8 Nano** | Object Detection (Transfer Learning) | Ultralytics |
-| **BLIP** | Image Captioning | Salesforce |
+This project uses the `nlpconnect/vit-gpt2-image-captioning` model. This model consists of:
 
-## Deployment
+- **Encoder:** A Vision Transformer (ViT) that processes the input image.
+- **Decoder:** A GPT-2 language model that generates a textual caption based on the visual features provided by the encoder.
 
-### Option 1: Streamlit Community Cloud (Recommended)
+For more details on the model, refer to its [Hugging Face Model Card](https://huggingface.co/nlpconnect/vit-gpt2-image-captioning).
 
-1. Push your code to GitHub
-2. Go to [share.streamlit.io](https://share.streamlit.io)
-3. Create a new app and select your repository
-4. Streamlit will automatically detect `app.py` and deploy
+## Acknowledgments
 
-### Option 2: Heroku
-
-1. Create `Procfile`:
-   ```
-   web: streamlit run --server.port $PORT --server.address 0.0.0.0 app.py
-   ```
-
-2. Deploy:
-   ```bash
-   git push heroku main
-   ```
-
-### Option 3: Docker
-
-1. Create `Dockerfile`:
-   ```dockerfile
-   FROM python:3.10-slim
-   WORKDIR /app
-   COPY requirements.txt .
-   RUN pip install -r requirements.txt
-   COPY . .
-   CMD streamlit run --server.port 8501 --server.address 0.0.0.0 app.py
-   ```
-
-2. Build and run:
-   ```bash
-   docker build -t caption-cv .
-   docker run -p 8501:8501 caption-cv
-   ```
-
-## Performance Tips
-
-- **First Run**: Models are downloaded and cached (~2-3 GB of storage)
-- **Caching**: Streamlit caches loaded models for faster subsequent runs
-- **GPU**: Install CUDA version of PyTorch for faster inference:
-  ```bash
-  pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-  ```
-
-## File Structure
-
-```
-Image-caption-CV/
-├── app.py                 # Streamlit main application
-├── model.py               # Model loading and inference logic
-├── requirements.txt       # Python dependencies
-├── .streamlit/
-│   └── config.toml        # Streamlit configuration
-├── templates/             # (Optional for Flask) Can be removed
-└── README.md              # This file
-```
-
-## Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| Models take long to download | This is normal on first run (~2-3 GB). They're cached for future runs. |
-| Out of memory | Use GPU or reduce batch size in inference |
-| CUDA not found | Install CPU version of PyTorch or CPU version works too |
-
-## API Reference
-
-### Main Functions
-
-```python
-generate_caption_with_detection(image: Image.Image) -> Tuple[str, List[Dict]]
-```
-- **Input**: PIL Image object
-- **Output**: Tuple of (caption_string, detections_list)
-
-```python
-image_caption_pipeline(filepath: str) -> str
-```
-- **Input**: File path to image
-- **Output**: Caption string
-
-## Environment Variables (Optional)
-
-```bash
-export LOG_LEVEL=info
-```
-
-## Future Enhancements
-
-- [ ] Fine-tune YOLO on custom dataset
-- [ ] Add batch processing for multiple images
-- [ ] Export captions as JSON/CSV
-- [ ] Support for video captioning
-- [ ] Multi-language caption support
-- [ ] Confidence filtering UI controls
+- [Hugging Face Transformers](https://huggingface.co/docs/transformers/index) for providing state-of-the-art NLP and vision models.
+- [Streamlit](https://streamlit.io/) for making web application development in Python incredibly easy.
+- This project was developed as part of a Google Colab initiative.
 
 ## License
 
-MIT
-
-## Support
-
-For issues or questions, please check the [Streamlit documentation](https://docs.streamlit.io)
-
----
-
-Built with ❤️ using Streamlit, YOLO, and BLIP
+[Optional: e.g., MIT License or Apache 2.0 License]
