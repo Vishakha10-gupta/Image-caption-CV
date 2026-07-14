@@ -4,11 +4,10 @@ from google import genai
 from google.genai.errors import APIError
 
 # --- Application Configuration ---
-st.set_page_config(page_title="Computer Vision Image Parser", layout="centered")
+st.set_page_config(page_title="Computer Vision Image Parser", layout="wide")
 
 # --- Initialize Client Securely from Streamlit Secrets ---
 try:
-    # Pulls directly from the Streamlit Cloud 3-dots Secrets panel
     api_key = st.secrets["GOOGLE_API_KEY"]
     client = genai.Client(api_key=api_key)
 except Exception:
@@ -18,7 +17,6 @@ except Exception:
 # --- Image Processing Components ---
 def analyze_image_content(image_matrix):
     try:
-        # Run content analysis pipeline using the secure client
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=[
@@ -46,18 +44,29 @@ uploaded_file = st.file_uploader("Choose an image file...", type=["jpg", "jpeg",
 if uploaded_file is not None:
     # Convert uploaded data stream to image structure
     image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, caption="Target Image", use_container_width=True)
     st.write("")
-
-    if st.button("Run Image Analysis"):
-        with st.spinner("Processing visual data matrix..."):
-            parsed_text = analyze_image_content(image)
-
-            if "Error" in parsed_text:
-                st.error(parsed_text)
-            else:
-                st.success("Processing Complete!")
-                st.info(f"**Generated Image Description:** {parsed_text}")
+    
+    # Create two equal-width columns for side-by-side view
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Target Image")
+        st.image(image, use_container_width=True)
+        analyze_button = st.button("Run Image Analysis", use_container_width=True)
+        
+    with col2:
+        st.subheader("Analysis Output")
+        if analyze_button:
+            with st.spinner("Processing visual data matrix..."):
+                parsed_text = analyze_image_content(image)
+                
+                if "Error" in parsed_text:
+                    st.error(parsed_text)
+                else:
+                    st.success("Processing Complete!")
+                    st.info(f"**Generated Image Description:** {parsed_text}")
+        else:
+            st.info("Click the Run Image Analysis button to view results here.")
 else:
     st.info("Please upload an image file to begin processing.")
 
