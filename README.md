@@ -1,6 +1,10 @@
 
 # Lightweight Image Captioning with Streamlit
 
+Deployment Link:- 
+
+https://image-caption-cv-af5kb4xml7dgfejpqhihm7.streamlit.app/
+
 This project implements a lightweight image captioning solution using a pre-trained Vision-Encoder-Decoder model from Hugging Face Transformers, deployed as a web application using Streamlit.
 
 ## Project Overview
