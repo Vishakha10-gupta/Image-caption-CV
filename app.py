@@ -3,17 +3,26 @@ from PIL import Image
 from google import genai
 from google.genai.errors import APIError
 
+# --- Application Configuration ---
+st.set_page_config(page_title="Computer Vision Image Parser", layout="centered")
+
+# --- Initialize Client Securely from Streamlit Secrets ---
+try:
+    # Pulls directly from the Streamlit Cloud 3-dots Secrets panel
+    api_key = st.secrets["GOOGLE_API_KEY"]
+    client = genai.Client(api_key=api_key)
+except Exception:
+    st.error("Missing API Key. Please configure GOOGLE_API_KEY in your Streamlit Secrets panel via the 3-dots menu.")
+    st.stop()
+
 # --- Image Processing Components ---
-def analyze_image_content(image, access_token):
+def analyze_image_content(image_matrix):
     try:
-        # Initialize the processing client using the system key
-        client = genai.Client(api_key=access_token)
-        
-        # Run content analysis pipeline 
+        # Run content analysis pipeline using the secure client
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=[
-                image, 
+                image_matrix, 
                 "Provide a highly accurate, brief description of the structural content and layout of this image."
             ]
         )
@@ -23,24 +32,12 @@ def analyze_image_content(image, access_token):
     except Exception as e:
         return f"System Error: Failed to execute content analysis path. ({str(e)})"
 
-# --- Streamlit UI Configuration ---
-st.set_page_config(page_title="Computer Vision Image Parser", layout="centered")
-
 # --- Sidebar Configuration ---
 with st.sidebar:
-    st.header("🔑 Authentication")
-    system_key = st.text_input(
-        "Enter System Access Key", 
-        type="password", 
-        help="Provide your developer access token from the systems portal to run the parser."
-    )
-    
-    if system_key:
-        st.success("Access key structured.")
-    else:
-        st.warning("Please enter your system access key to initialize.")
+    st.header("Authentication")
+    st.success("System connection secure. Ready to parse.")
 
-st.title("🖼️ Automated Image Content Parser")
+st.title("Automated Image Content Parser")
 st.write("Upload a digital image file to execute structural content parsing and generate a description.")
 
 # Image Upload Block
@@ -51,19 +48,16 @@ if uploaded_file is not None:
     image = Image.open(uploaded_file).convert("RGB")
     st.image(image, caption="Target Image", use_container_width=True)
     st.write("")
-    
+
     if st.button("Run Image Analysis"):
-        if not system_key:
-            st.error("Access key required. Please complete authentication in the sidebar panel.")
-        else:
-            with st.spinner("Processing visual data matrix..."):
-                parsed_text = analyze_image_content(image, system_key)
-                
-                if "Error" in parsed_text:
-                    st.error(parsed_text)
-                else:
-                    st.success("Processing Complete!")
-                    st.info(f"**Generated Image Description:** {parsed_text}")
+        with st.spinner("Processing visual data matrix..."):
+            parsed_text = analyze_image_content(image)
+
+            if "Error" in parsed_text:
+                st.error(parsed_text)
+            else:
+                st.success("Processing Complete!")
+                st.info(f"**Generated Image Description:** {parsed_text}")
 else:
     st.info("Please upload an image file to begin processing.")
 
